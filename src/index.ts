@@ -1,1 +1,1 @@
-export {};
+export { isAtLeast } from './version';
