@@ -1,5 +1,11 @@
 export { getInitData, parseInitData } from './init-data';
 export type { InitDataFieldWarning, ParsedInitData } from './init-data.types';
+export { signInitData, validateInitData, validateInitDataSignature } from './validate';
+export type {
+  SignableInitDataFields,
+  ValidateSignatureOptions,
+  ValidationResult,
+} from './validate.types';
 export { isAtLeast } from './version';
 export { expand, getWebApp, isMiniApp, on, ready, supportsVersion } from './web-app';
 export type {
