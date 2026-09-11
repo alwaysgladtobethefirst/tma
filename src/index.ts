@@ -1,3 +1,5 @@
+export { getInitData, parseInitData } from './init-data';
+export type { InitDataFieldWarning, ParsedInitData } from './init-data.types';
 export { isAtLeast } from './version';
 export { expand, getWebApp, isMiniApp, on, ready, supportsVersion } from './web-app';
 export type {
