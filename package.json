@@ -1,6 +1,6 @@
 {
   "name": "@skrynnyk/tma",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Typed bridge to the Telegram Mini App platform, with React hooks and thin wrapper components.",
   "license": "MIT",
   "author": "alwaysgladtobethefirst",
