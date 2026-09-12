@@ -8,18 +8,18 @@
  * gap in between to worry about.
  */
 export interface WebApp {
-  // Launch data: how this Mini App was opened, and by whom.
+  // launch data: how this mini app was opened, and by whom
   readonly initData: string;
   readonly initDataUnsafe: WebAppInitData;
 
-  // Which Telegram client this is running in, and what it supports.
+  // which telegram client this is running in, and what it supports
   /** The Bot API version this client supports, written as `"major.minor"` (for example `"8.0"`). */
   readonly version: string;
   readonly platform: Platform;
   readonly colorScheme: ColorScheme;
   readonly themeParams: ThemeParams;
 
-  // The visible area of the Mini App, and how much of the screen it takes up.
+  // the visible area, and how much of the screen it takes up
   readonly isExpanded: boolean;
   readonly viewportHeight: number;
   readonly viewportStableHeight: number;
@@ -28,24 +28,24 @@ export interface WebApp {
   readonly safeAreaInset: SafeAreaInset;
   readonly contentSafeAreaInset: ContentSafeAreaInset;
 
-  // Colors Telegram is currently drawing around the Mini App.
+  // colors telegram is currently drawing around the mini app
   readonly headerColor: string;
   readonly backgroundColor: string;
   readonly bottomBarColor: string;
 
-  // Behavior flags the Mini App can turn on or off.
+  // behavior flags the mini app can turn on or off
   readonly isClosingConfirmationEnabled: boolean;
   readonly isVerticalSwipesEnabled: boolean;
   /** `false` while the Mini App is minimized or in the background. */
   readonly isActive: boolean;
 
-  // The buttons Telegram itself draws around the Mini App.
+  // the buttons telegram itself draws around the mini app
   readonly MainButton: BottomButton;
   readonly SecondaryButton: BottomButton;
   readonly BackButton: BackButton;
   readonly SettingsButton: SettingsButton;
 
-  // Optional device and platform features, each behind its own manager object.
+  // optional device and platform features, each behind its own manager object
   readonly HapticFeedback: HapticFeedback;
   readonly CloudStorage: CloudStorage;
   readonly BiometricManager: BiometricManager;
@@ -54,34 +54,34 @@ export interface WebApp {
   readonly Gyroscope: Gyroscope;
   readonly LocationManager: LocationManager;
 
-  // Starting up and closing.
+  // starting up and closing
   ready(): void;
   expand(): void;
   close(): void;
   isVersionAtLeast(version: string): boolean;
 
-  // Setting colors.
+  // setting colors
   setHeaderColor(color: BackgroundColorKey | string): void;
   setBackgroundColor(color: BackgroundColorKey | string): void;
   setBottomBarColor(color: BottomBarColorKey | string): void;
 
-  // Turning behavior on or off.
+  // turning behavior on or off
   enableClosingConfirmation(): void;
   disableClosingConfirmation(): void;
   enableVerticalSwipes(): void;
   disableVerticalSwipes(): void;
 
-  // Fullscreen and screen orientation.
+  // fullscreen and screen orientation
   requestFullscreen(): void;
   exitFullscreen(): void;
   lockOrientation(): void;
   unlockOrientation(): void;
 
-  // Listening for events. See `TelegramEventMap` for the full list.
+  // listening for events, see `TelegramEventMap` for the full list
   onEvent<E extends EventType>(eventType: E, eventHandler: EventHandler<E>): void;
   offEvent<E extends EventType>(eventType: E, eventHandler: EventHandler<E>): void;
 
-  // Sending data back to the bot, and navigating away from the Mini App.
+  // sending data back to the bot, and navigating away from the mini app
   /** Only works for a Mini App opened from a keyboard button. The data is limited to 4096 bytes. */
   sendData(data: string): void;
   switchInlineQuery(query: string, choose_chat_types?: ChooseChatType[]): void;
@@ -89,7 +89,7 @@ export interface WebApp {
   openTelegramLink(url: string): void;
   openInvoice(url: string, callback?: (status: InvoiceStatus) => void): void;
 
-  // Popups and prompts shown by the Telegram client itself.
+  // popups and prompts shown by the telegram client itself
   showPopup(params: PopupParams, callback?: (buttonId: string | null) => void): void;
   showAlert(message: string, callback?: () => void): void;
   showConfirm(message: string, callback?: (ok: boolean) => void): void;
@@ -100,7 +100,7 @@ export interface WebApp {
   ): void;
   closeScanQrPopup(): void;
 
-  // Asking the user for something: clipboard access, permission to write to them, their contact card, and so on.
+  // asking the user for something: clipboard access, permission to write, their contact card, and so on
   readTextFromClipboard(callback?: (text: string | null) => void): void;
   requestWriteAccess(callback?: (granted: boolean) => void): void;
   requestContact(callback?: (shared: boolean) => void): void;
@@ -159,7 +159,7 @@ export interface OpenLinkOptions {
   try_instant_view?: boolean;
 }
 
-// Theme
+// theme
 
 /**
  * The colors of the user's current Telegram theme. Every one of these
@@ -186,7 +186,7 @@ export interface ThemeParams {
   bottom_bar_bg_color?: string;
 }
 
-// Launch data
+// launch data
 
 /**
  * The information Telegram passes along when it opens a Mini App, once it's
@@ -254,7 +254,7 @@ export interface WebAppChat {
 /** The kind of chat a Mini App can be launched from directly (as opposed to a private one-on-one chat). */
 export type WebAppChatType = 'group' | 'supergroup' | 'channel';
 
-// Viewport
+// viewport
 
 /** The distance, in pixels, from each edge of the screen to the area that's safe to put content in without it being covered by system UI (like a phone's notch or home indicator). */
 export interface SafeAreaInset {
@@ -272,7 +272,7 @@ export interface ContentSafeAreaInset {
   right: number;
 }
 
-// Buttons
+// buttons
 
 export interface BackButton {
   readonly isVisible: boolean;
@@ -334,7 +334,7 @@ export interface SettingsButton {
   hide(): SettingsButton;
 }
 
-// Feature managers
+// feature managers
 
 export type ImpactStyle = 'light' | 'medium' | 'heavy' | 'rigid' | 'soft';
 export type NotificationType = 'error' | 'success' | 'warning';
@@ -500,7 +500,7 @@ export interface LocationManager {
   openSettings(): LocationManager;
 }
 
-// Method parameter types
+// method parameter types
 
 export interface PopupParams {
   /** Up to 64 characters. */
@@ -552,7 +552,7 @@ export interface DownloadFileParams {
   file_name: string;
 }
 
-// Events
+// events
 
 /**
  * Every event name `onEvent`/`offEvent` accepts, mapped to the shape of the

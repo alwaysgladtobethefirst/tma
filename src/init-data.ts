@@ -28,8 +28,7 @@ function parseObjectField<T>(
     return { warning: { field, reason: 'invalid JSON' } };
   }
 
-  // `typeof null === 'object'`, so this also catches `JSON.parse('null')` —
-  // without it, reading a required field below would throw instead of warning.
+  // `typeof null === 'object'`, so this also catches `JSON.parse('null')`
   if (typeof parsed !== 'object' || parsed === null) {
     return { warning: { field, reason: 'not an object' } };
   }
