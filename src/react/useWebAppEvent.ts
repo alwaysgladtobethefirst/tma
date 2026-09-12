@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { on } from '../web-app';
 import type { EventHandler, EventPayload, EventType } from '../web-app.types';
-import { useTmaContext } from './TmaProvider';
+import { useTmaContext } from './useTmaContext';
 
 /**
  * Runs `handler` whenever Telegram fires `event`, for as long as the

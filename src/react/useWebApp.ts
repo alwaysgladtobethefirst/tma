@@ -1,6 +1,6 @@
 import { getWebApp } from '../web-app';
 import type { WebApp } from '../web-app.types';
-import { useTmaContext } from './TmaProvider';
+import { useTmaContext } from './useTmaContext';
 
 /**
  * The raw `WebApp` object, or `undefined` outside Telegram — the escape

@@ -1,5 +1,5 @@
 import type { WebAppInitData } from '../web-app.types';
-import { useTmaContext } from './TmaProvider';
+import { useTmaContext } from './useTmaContext';
 
 /**
  * How this Mini App was opened, and by whom — or `undefined` outside
