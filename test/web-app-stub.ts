@@ -1,5 +1,19 @@
-import { vi } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import type { EventType, WebApp } from '../src/web-app.types';
+
+/** Spelled out rather than inferred: the inferred shape names vitest internals, which the .d.ts build can't reference. */
+interface ButtonStub {
+  setParams: Mock;
+  setText: Mock;
+  show: Mock;
+  hide: Mock;
+  enable: Mock;
+  disable: Mock;
+  showProgress: Mock;
+  hideProgress: Mock;
+  onClick: Mock;
+  offClick: Mock;
+}
 
 /**
  * Puts a stub where `getWebApp()` looks, for the React layer's jsdom tests.
@@ -13,6 +27,45 @@ export function installWebApp(webApp: Partial<WebApp> = {}): Partial<WebApp> {
   const stub: Partial<WebApp> = { ready: vi.fn(), ...webApp };
   vi.stubGlobal('Telegram', { WebApp: stub });
   return stub;
+}
+
+/**
+ * A stub for one of the buttons Telegram draws. It records click
+ * subscriptions so a test can fire the button and, more importantly, count
+ * who is still listening — that's what shows a hook subscribed once and let
+ * go on unmount.
+ */
+export function createButtonStub(): {
+  button: ButtonStub;
+  click: () => void;
+  listenerCount: () => number;
+} {
+  const clicks = new Set<() => void>();
+
+  const button: ButtonStub = {
+    setParams: vi.fn(),
+    setText: vi.fn(),
+    show: vi.fn(),
+    hide: vi.fn(),
+    enable: vi.fn(),
+    disable: vi.fn(),
+    showProgress: vi.fn(),
+    hideProgress: vi.fn(),
+    onClick: vi.fn((cb: () => void) => {
+      clicks.add(cb);
+    }),
+    offClick: vi.fn((cb: () => void) => {
+      clicks.delete(cb);
+    }),
+  };
+
+  return {
+    button,
+    click: () => {
+      for (const cb of [...clicks]) cb();
+    },
+    listenerCount: () => clicks.size,
+  };
 }
 
 type AnyHandler = (payload?: unknown) => void;

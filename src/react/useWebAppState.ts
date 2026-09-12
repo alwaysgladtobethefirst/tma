@@ -6,25 +6,31 @@ import { useWebAppSnapshot } from './useWebAppSnapshot';
 /**
  * A piece of `WebApp` state that a set of events announces changes to.
  *
- * `events` and `read` must be stable across renders — define them at module
- * scope — or the subscription is torn down and rebuilt on every render.
+ * The subscription is keyed by the event names themselves rather than by the
+ * identity of the array holding them, so passing a fresh `['themeChanged']`
+ * on every render is harmless. Keying on identity would have torn the
+ * subscription down and rebuilt it each time, silently, for anyone who
+ * didn't happen to hoist the array to module scope.
  */
 export function useWebAppState<T>(
   hookName: string,
   events: readonly EventType[],
   read: (webApp: WebApp) => T,
 ): T | undefined {
+  const eventKey = events.join(' ');
+
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
-      const unsubscribes = events.map((event) =>
-        on(event, onStoreChange as EventHandler<EventType>),
-      );
+      // the key is the source of truth here: same names, same subscription, whoever built the array
+      const unsubscribes = eventKey
+        .split(' ')
+        .map((event) => on(event as EventType, onStoreChange as EventHandler<EventType>));
 
       return () => {
         for (const unsubscribe of unsubscribes) unsubscribe();
       };
     },
-    [events],
+    [eventKey],
   );
 
   return useWebAppSnapshot(hookName, subscribe, read);

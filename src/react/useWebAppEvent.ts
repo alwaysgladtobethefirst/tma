@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { on } from '../web-app';
 import type { EventHandler, EventPayload, EventType } from '../web-app.types';
+import { useIsomorphicLayoutEffect } from './useIsomorphicLayoutEffect';
 import { useTmaContext } from './useTmaContext';
 
 /**
@@ -16,7 +17,7 @@ export function useWebAppEvent<E extends EventType>(event: E, handler: EventHand
   useTmaContext('useWebAppEvent');
 
   const handlerRef = useRef(handler);
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     handlerRef.current = handler;
   });
 
