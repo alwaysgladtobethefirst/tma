@@ -1,6 +1,6 @@
 import { getWebApp } from '../web-app';
 import type { WebApp } from '../web-app.types';
-import { useRequireTmaProvider } from './TmaProvider';
+import { useTmaContext } from './TmaProvider';
 
 /**
  * The raw `WebApp` object, or `undefined` outside Telegram — the escape
@@ -10,6 +10,6 @@ import { useRequireTmaProvider } from './TmaProvider';
  * you want to re-render on a change.
  */
 export function useWebApp(): WebApp | undefined {
-  useRequireTmaProvider('useWebApp');
+  useTmaContext('useWebApp');
   return getWebApp();
 }

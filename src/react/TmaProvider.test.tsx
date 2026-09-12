@@ -1,13 +1,9 @@
 // @vitest-environment jsdom
 import { cleanup, render, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { WebApp } from '../web-app.types';
+import { installWebApp } from '../../test/web-app-stub';
 import { TmaProvider } from './TmaProvider';
 import { useWebApp } from './useWebApp';
-
-function installWebApp(webApp: Partial<WebApp>) {
-  vi.stubGlobal('Telegram', { WebApp: webApp });
-}
 
 afterEach(() => {
   cleanup();

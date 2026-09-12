@@ -1,14 +1,22 @@
-import { createContext, useContext, useEffect } from 'react';
+import { createContext, useContext, useEffect, useMemo } from 'react';
+import { getInitData } from '../init-data';
+import type { InitDataFieldWarning } from '../init-data.types';
 import { isMiniApp, ready } from '../web-app';
-import type { TmaProviderProps } from './TmaProvider.types';
+import type { TmaContextValue, TmaProviderProps } from './TmaProvider.types';
 
 /** Declared rather than imported: this package pulls in no Node types, and `process` is absent in a plain browser. */
 declare const process: { env?: { NODE_ENV?: string } } | undefined;
 
-/** Carries no state of its own — that lives in the stores hooks subscribe to. `false` means "no provider above". */
-const TmaContext = createContext(false);
+/** `null` is "no provider above" — the one thing every hook checks before doing anything. */
+const TmaContext = createContext<TmaContextValue | null>(null);
 
 let hasWarnedOutsideTelegram = false;
+let hasWarnedAboutLaunchData = false;
+
+/** Absent `process` counts as development: the case it can't tell apart is an unbundled browser build, where a developer wondering why nothing works is the likelier reader. */
+function isProductionBuild(): boolean {
+  return typeof process !== 'undefined' && process?.env?.NODE_ENV === 'production';
+}
 
 /**
  * Says once, in development only, that there is no Telegram to talk to.
@@ -17,13 +25,25 @@ let hasWarnedOutsideTelegram = false;
  * package rather than a note about the environment.
  */
 function warnOutsideTelegram(): void {
-  if (hasWarnedOutsideTelegram) return;
-  if (typeof process !== 'undefined' && process?.env?.NODE_ENV === 'production') return;
+  if (hasWarnedOutsideTelegram || isProductionBuild()) return;
 
   hasWarnedOutsideTelegram = true;
   console.warn(
     '<TmaProvider> is mounted outside Telegram: there is no window.Telegram.WebApp, so every hook reports `undefined` and every core call does nothing. This is expected in a plain browser tab.',
   );
+}
+
+/**
+ * Reports launch-data fields that were present but unreadable. These never
+ * reach `useInitData`, which would otherwise make a broken field and an
+ * absent one look identical.
+ */
+function warnAboutLaunchData(warnings: InitDataFieldWarning[]): void {
+  if (hasWarnedAboutLaunchData || warnings.length === 0 || isProductionBuild()) return;
+
+  hasWarnedAboutLaunchData = true;
+  const summary = warnings.map(({ field, reason }) => `${field} (${reason})`).join(', ');
+  console.warn(`Some launch data fields could not be read and were left out: ${summary}.`);
 }
 
 /**
@@ -35,25 +55,32 @@ function warnOutsideTelegram(): void {
  * to take, which belongs to the app, not to this package.
  */
 export function TmaProvider({ children }: TmaProviderProps) {
-  useEffect(() => {
-    if (isMiniApp()) {
-      ready();
-    } else {
-      warnOutsideTelegram();
-    }
-  }, []);
+  const launch = useMemo(() => getInitData(), []);
+  const value = useMemo<TmaContextValue>(() => ({ launch }), [launch]);
 
-  return <TmaContext value={true}>{children}</TmaContext>;
+  useEffect(() => {
+    if (!isMiniApp()) {
+      warnOutsideTelegram();
+      return;
+    }
+
+    ready();
+    if (launch) warnAboutLaunchData(launch.warnings);
+  }, [launch]);
+
+  return <TmaContext value={value}>{children}</TmaContext>;
 }
 
 /**
- * Fails loudly when a hook is called without a `<TmaProvider>` above it.
- * Takes the caller's name so the error points at the hook the developer
- * actually wrote, not at this shared guard.
+ * Everything the provider shares, or a thrown error naming the hook that
+ * asked. Takes the caller's name so the message points at the hook the
+ * developer actually wrote, not at this shared guard.
  */
-export function useRequireTmaProvider(hookName: string): void {
-  const hasProvider = useContext(TmaContext);
-  if (!hasProvider) {
+export function useTmaContext(hookName: string): TmaContextValue {
+  const value = useContext(TmaContext);
+  if (value === null) {
     throw new Error(`${hookName}() needs a <TmaProvider> above it in the tree.`);
   }
+
+  return value;
 }
