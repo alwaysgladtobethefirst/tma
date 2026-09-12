@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getInitData } from '../init-data';
 import { isMiniApp, ready } from '../web-app';
+import { createStoreRegistry } from './createStoreRegistry';
 import type { TmaContextValue, TmaProviderProps } from './TmaProvider.types';
 import { TmaContext } from './useTmaContext';
 import { warnOnce } from './warnOnce';
@@ -9,14 +10,19 @@ import { warnOnce } from './warnOnce';
  * The root every hook in this layer needs above it. Mount it once, near the
  * top of the tree.
  *
- * Mounting tells Telegram the Mini App is ready to be shown. It deliberately
- * doesn't `expand()` as well: that's a choice about how much of the screen
- * to take, which belongs to the app, not to this package.
+ * It owns three things for the whole tree: one store per piece of changing
+ * state, so however many components read the theme there is still only one
+ * subscription to Telegram; the launch data, parsed once; and the moment the
+ * Mini App is ready to be shown.
+ *
+ * It deliberately doesn't `expand()`: how much of the screen to take is a
+ * choice that belongs to the app, not to this package.
  */
 export function TmaProvider({ children }: TmaProviderProps) {
   // lazy initial state, not useMemo: react may discard useMemo and re-parse mid-session
   const [launch] = useState(getInitData);
-  const value = useMemo<TmaContextValue>(() => ({ launch }), [launch]);
+  const [stores] = useState(createStoreRegistry);
+  const value = useMemo<TmaContextValue>(() => ({ launch, stores }), [launch, stores]);
 
   useEffect(() => {
     if (!isMiniApp()) {

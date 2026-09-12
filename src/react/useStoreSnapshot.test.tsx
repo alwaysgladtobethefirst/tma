@@ -6,13 +6,18 @@ import { TmaProvider } from './TmaProvider';
 import { useTheme } from './useTheme';
 import { useViewport } from './useViewport';
 
+function ThemeReader() {
+  useTheme();
+  return null;
+}
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
-describe('useWebAppSnapshot', () => {
+describe('useStoreSnapshot', () => {
   it('wakes only the components reading what actually changed', () => {
     const { stub, emit } = installEventfulWebApp({
       colorScheme: 'light',
@@ -25,13 +30,13 @@ describe('useWebAppSnapshot', () => {
     let themeRenders = 0;
     let viewportRenders = 0;
 
-    function ThemeReader() {
+    function CountedThemeReader() {
       themeRenders += 1;
       useTheme();
       return null;
     }
 
-    function ViewportReader() {
+    function CountedViewportReader() {
       viewportRenders += 1;
       useViewport();
       return null;
@@ -39,8 +44,8 @@ describe('useWebAppSnapshot', () => {
 
     render(
       <TmaProvider>
-        <ThemeReader />
-        <ViewportReader />
+        <CountedThemeReader />
+        <CountedViewportReader />
       </TmaProvider>,
     );
     const themeBefore = themeRenders;
@@ -55,24 +60,20 @@ describe('useWebAppSnapshot', () => {
     expect(viewportRenders).toBe(viewportBefore);
   });
 
-  it('gives each reader of the same state its own subscription, and drops them one by one', () => {
+  it('puts every reader of the same state on one subscription, dropped when the last leaves', () => {
     const { listenerCount } = installEventfulWebApp({
       colorScheme: 'light',
       themeParams: { bg_color: '#ffffff' },
     });
 
-    function ThemeReader() {
-      useTheme();
-      return null;
-    }
-
     const { rerender, unmount } = render(
       <TmaProvider>
         <ThemeReader />
         <ThemeReader />
+        <ThemeReader />
       </TmaProvider>,
     );
-    expect(listenerCount('themeChanged')).toBe(2);
+    expect(listenerCount('themeChanged')).toBe(1);
 
     rerender(
       <TmaProvider>
@@ -83,5 +84,49 @@ describe('useWebAppSnapshot', () => {
 
     unmount();
     expect(listenerCount('themeChanged')).toBe(0);
+  });
+
+  it('hands every reader the very same object, not just an equal one', () => {
+    installEventfulWebApp({ colorScheme: 'dark', themeParams: { bg_color: '#000000' } });
+
+    const seen: unknown[] = [];
+
+    function Collector() {
+      seen.push(useTheme());
+      return null;
+    }
+
+    render(
+      <TmaProvider>
+        <Collector />
+        <Collector />
+      </TmaProvider>,
+    );
+
+    expect(seen).toHaveLength(2);
+    expect(seen[0]).toBe(seen[1]);
+  });
+
+  it('subscribes again when every reader leaves and one comes back', () => {
+    const { listenerCount } = installEventfulWebApp({
+      colorScheme: 'light',
+      themeParams: { bg_color: '#ffffff' },
+    });
+
+    const { rerender } = render(
+      <TmaProvider>
+        <ThemeReader />
+      </TmaProvider>,
+    );
+    rerender(<TmaProvider>{null}</TmaProvider>);
+    expect(listenerCount('themeChanged')).toBe(0);
+
+    rerender(
+      <TmaProvider>
+        <ThemeReader />
+      </TmaProvider>,
+    );
+
+    expect(listenerCount('themeChanged')).toBe(1);
   });
 });

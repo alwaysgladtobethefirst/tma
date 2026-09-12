@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { ParsedInitData } from '../init-data.types';
+import type { StoreRegistry } from './createWebAppStore.types';
 
 /** Props for `<TmaProvider>`. */
 export interface TmaProviderProps {
@@ -7,10 +8,15 @@ export interface TmaProviderProps {
 }
 
 /**
- * What the provider puts in context. Only what is parsed once at startup
- * goes here; state that changes while the Mini App runs lives in the stores
- * each hook subscribes to, so a change there re-renders only its own readers.
+ * What the provider owns on behalf of the whole tree: the launch data it
+ * parsed once, and one store per piece of changing state.
+ *
+ * The registry is why a second component reading the theme joins the first
+ * rather than opening its own subscription to Telegram. Its identity never
+ * changes, so the context itself never re-renders anyone — each store wakes
+ * only the components actually reading it.
  */
 export interface TmaContextValue {
   launch: ParsedInitData | undefined;
+  stores: StoreRegistry;
 }
