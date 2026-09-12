@@ -1,0 +1,31 @@
+name: mirror to github packages
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: git ref (commit sha, branch, or tag) to build and publish
+        required: true
+        default: main
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@alwaysgladtobethefirst'
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - run: |
+          npm pkg set name=@alwaysgladtobethefirst/tma
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
