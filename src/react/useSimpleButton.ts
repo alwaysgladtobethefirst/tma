@@ -17,14 +17,14 @@ export function useSimpleButton(
   name: SimpleButtonName,
   onClick: () => void,
 ): void {
-  useTmaContext(hookName);
+  const { ownership } = useTmaContext(hookName);
 
   const onClickRef = useRef(onClick);
   useEffect(() => {
     onClickRef.current = onClick;
   });
 
-  useButtonOwnership(name, () => {
+  useButtonOwnership(ownership, name, () => {
     getWebApp()?.[name].hide();
   });
 

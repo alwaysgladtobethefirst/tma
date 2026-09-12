@@ -1,3 +1,6 @@
+/** How a store hears that its value may have moved. Hands back the teardown. */
+export type Listen = (onChange: () => void) => () => void;
+
 /** One piece of `WebApp` state, shared by everybody reading it. */
 export interface WebAppStore<T> {
   /** Hands back the teardown. Telegram is subscribed to on the first reader and let go of on the last. */

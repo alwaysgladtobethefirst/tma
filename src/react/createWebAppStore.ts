@@ -1,30 +1,5 @@
-import { getWebApp, on } from '../web-app';
-import type { EventHandler, EventType, WebApp } from '../web-app.types';
-import type { WebAppStore } from './createWebAppStore.types';
+import type { Listen, WebAppStore } from './createWebAppStore.types';
 import { isSameSnapshot } from './isSameSnapshot';
-
-/** How a store hears that its value may have moved. Hands back the teardown. */
-type Listen = (onChange: () => void) => () => void;
-
-/** Subscribes to Telegram once for the whole set, however many components are reading. */
-export function fromEvents(events: readonly EventType[]): Listen {
-  return (onChange) => {
-    const unsubscribes = events.map((event) => on(event, onChange as EventHandler<EventType>));
-
-    return () => {
-      for (const unsubscribe of unsubscribes) unsubscribe();
-    };
-  };
-}
-
-/** Reads through `read`, or reports `undefined` when there is no Telegram to read from. */
-export function readWebApp<T>(read: (webApp: WebApp) => T): () => T | undefined {
-  return () => {
-    const webApp = getWebApp();
-
-    return webApp === undefined ? undefined : read(webApp);
-  };
-}
 
 /**
  * One value, one subscription to Telegram, one cached snapshot — however

@@ -103,6 +103,23 @@ describe('useMainButton', () => {
     expect(main.button.hide).not.toHaveBeenCalled();
   });
 
+  it('does not carry an ownership count over from an unrelated provider', () => {
+    // if the count were tracked at module scope, this leftover claim (never released) would
+    // leave the second provider's own owner thinking it isn't the last one, and hide() would
+    // never fire below — console.warn state genuinely is shared across a test file (by design,
+    // see warnOnce), so this checks the count's effect rather than the warning itself
+    installMainButton();
+    renderHook(() => useMainButton({ text: 'Save', onClick: vi.fn() }), { wrapper: TmaProvider });
+
+    const second = installMainButton();
+    const { unmount } = renderHook(() => useMainButton({ text: 'Save', onClick: vi.fn() }), {
+      wrapper: TmaProvider,
+    });
+    unmount();
+
+    expect(second.button.hide).toHaveBeenCalled();
+  });
+
   it('does nothing outside Telegram instead of throwing', () => {
     expect(() =>
       renderHook(() => useMainButton({ text: 'Save', onClick: vi.fn() }), { wrapper: TmaProvider }),

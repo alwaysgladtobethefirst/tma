@@ -25,7 +25,7 @@ export function useBottomButton(
   name: BottomButtonName,
   options: BottomButtonOptions & { position?: BottomButtonPosition },
 ): void {
-  useTmaContext(hookName);
+  const { ownership } = useTmaContext(hookName);
 
   const {
     text,
@@ -43,7 +43,7 @@ export function useBottomButton(
     onClickRef.current = onClick;
   });
 
-  useButtonOwnership(name, () => {
+  useButtonOwnership(ownership, name, () => {
     selectButton(name)?.hide();
   });
 
