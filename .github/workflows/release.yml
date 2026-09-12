@@ -20,10 +20,11 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run build
-      - uses: changesets/action@v1
+      - uses: changesets/action@v2
         id: changesets
         with:
-          publish: bun run release
+          publish-script: bun run release
+          create-github-releases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
