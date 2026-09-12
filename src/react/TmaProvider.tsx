@@ -14,8 +14,7 @@ import { warnOnce } from './warnOnce';
  * to take, which belongs to the app, not to this package.
  */
 export function TmaProvider({ children }: TmaProviderProps) {
-  // Lazy initial state rather than useMemo: useMemo may be thrown away and
-  // recomputed, which would re-parse the launch data mid-session.
+  // lazy initial state, not useMemo: react may discard useMemo and re-parse mid-session
   const [launch] = useState(getInitData);
   const value = useMemo<TmaContextValue>(() => ({ launch }), [launch]);
 

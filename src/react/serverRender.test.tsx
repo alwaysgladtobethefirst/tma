@@ -45,7 +45,7 @@ describe('server render', () => {
       isExpanded: true,
     });
 
-    // React separates adjacent text nodes with empty comments; they'd only obscure what's asserted.
+    // react separates adjacent text nodes with empty comments
     const html = renderToString(TREE).replaceAll('<!-- -->', '');
 
     expect(html).toContain('theme:none');

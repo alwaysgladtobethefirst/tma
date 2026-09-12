@@ -6,9 +6,7 @@ function bytesToBase64Url(bytes: Uint8Array): string {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-// Independently computed via Node's own `crypto` module (not this package's
-// implementation) — a known-answer fixture, not a self-consistency check.
-// See the generating script referenced in the PR/commit for this file.
+// computed with node's own crypto, not this package's — a known answer, not a self-consistency check
 const FIXTURE_BOT_TOKEN = '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11';
 const FIXTURE_RAW = new URLSearchParams({
   auth_date: '1700000000',
@@ -62,11 +60,7 @@ describe('validateInitData', () => {
   });
 });
 
-// There's no way to test the "correctly signed → isValid: true" path here:
-// verification only ever runs against Telegram's own published public keys,
-// and we don't have (and can't have) the matching private key. Every other
-// branch — the only ones a unit test can actually exercise without a real
-// Telegram-issued initData capture — is covered below.
+// the "valid signature" path needs telegram's private key, so only the rejecting branches are testable
 describe('validateInitDataSignature', () => {
   const BOT_ID = 12345678;
 

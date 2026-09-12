@@ -43,4 +43,15 @@ describe('useContentSafeArea', () => {
     });
     expect(result.current?.top).toBe(56);
   });
+
+  it('unsubscribes when the component goes away', () => {
+    const { listenerCount } = installEventfulWebApp({
+      contentSafeAreaInset: { top: 0, bottom: 0, left: 0, right: 0 },
+    });
+    const { unmount } = renderHook(() => useContentSafeArea(), { wrapper: TmaProvider });
+
+    unmount();
+
+    expect(listenerCount('contentSafeAreaChanged')).toBe(0);
+  });
 });

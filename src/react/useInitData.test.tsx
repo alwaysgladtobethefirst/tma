@@ -43,7 +43,7 @@ describe('useInitData', () => {
     expect(result.current).toBe(first);
   });
 
-  it('leaves a field out and reports it when it is there but broken', () => {
+  it('leaves a broken field out and reports it once per page load, not once per mount', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     installWebApp({
       initData: new URLSearchParams({
@@ -53,10 +53,13 @@ describe('useInitData', () => {
       }).toString(),
     });
 
-    const { result } = renderHook(() => useInitData(), { wrapper: TmaProvider });
+    const first = renderHook(() => useInitData(), { wrapper: TmaProvider });
+    expect(first.result.current?.auth_date).toBe(1700000000);
+    expect(first.result.current?.user).toBeUndefined();
 
-    expect(result.current?.auth_date).toBe(1700000000);
-    expect(result.current?.user).toBeUndefined();
+    cleanup();
+    renderHook(() => useInitData(), { wrapper: TmaProvider });
+
     expect(warn).toHaveBeenCalledOnce();
     expect(warn.mock.calls[0]?.[0]).toMatch(/user/);
   });

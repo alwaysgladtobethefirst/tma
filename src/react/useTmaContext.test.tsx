@@ -11,8 +11,7 @@ import { useViewport } from './useViewport';
 import { useWebApp } from './useWebApp';
 import { useWebAppEvent } from './useWebAppEvent';
 
-// Every hook passes its own name to the guard as a plain string, so a copied
-// line would report the wrong hook. Listing them all is what catches that.
+// every hook passes its own name as a string, so a copied line would report the wrong hook
 const HOOKS: Array<[name: string, use: () => unknown]> = [
   ['useContentSafeArea', () => useContentSafeArea()],
   ['useFullscreen', () => useFullscreen()],

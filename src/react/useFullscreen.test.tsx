@@ -37,4 +37,13 @@ describe('useFullscreen', () => {
 
     expect(result.current).toBe(true);
   });
+
+  it('unsubscribes when the component goes away', () => {
+    const { listenerCount } = installEventfulWebApp({ isFullscreen: false });
+    const { unmount } = renderHook(() => useFullscreen(), { wrapper: TmaProvider });
+
+    unmount();
+
+    expect(listenerCount('fullscreenChanged')).toBe(0);
+  });
 });

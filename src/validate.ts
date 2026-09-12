@@ -100,9 +100,7 @@ export async function validateInitData(raw: string, botToken: string): Promise<V
   const secretKeyBytes = await deriveSecretKeyBytes(botToken);
   const verifyKey = await importHmacKey(secretKeyBytes, ['verify']);
 
-  // HMAC verification with valid, already-decoded inputs essentially can't
-  // throw, but every diagnostic here flows through the return value, never
-  // an exception, so this stays consistent even for that theoretical case.
+  // hmac verify can't really throw on decoded inputs, but diagnostics always flow through the return value
   let isValid: boolean;
   try {
     isValid = await crypto.subtle.verify(
@@ -157,10 +155,7 @@ export async function validateInitDataSignature(
     ? ED25519_PUBLIC_KEY_HEX.test
     : ED25519_PUBLIC_KEY_HEX.production;
 
-  // Decoded outside the runtime-support try/catch below: this is one of our
-  // own hardcoded constants, not user input, so a failure here means the
-  // constant itself is corrupted — a programming error, not a runtime
-  // limitation, and it shouldn't be reported as "unsupported runtime".
+  // decoded outside the try/catch below: a bad constant here is our bug, not an unsupported runtime
   const publicKeyBytes = hexToBytes(publicKeyHex);
 
   let publicKey: CryptoKey;
@@ -172,9 +167,7 @@ export async function validateInitDataSignature(
     return { isValid: false, reason: 'Ed25519 is not supported in this runtime' };
   }
 
-  // As with the HMAC path above: verification with valid inputs essentially
-  // can't throw, but this keeps every diagnostic flowing through the return
-  // value rather than an exception.
+  // same as the hmac path: can't really throw, but diagnostics stay in the return value
   let isValid: boolean;
   try {
     isValid = await crypto.subtle.verify(

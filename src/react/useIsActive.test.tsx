@@ -42,4 +42,14 @@ describe('useIsActive', () => {
     });
     expect(result.current).toBe(true);
   });
+
+  it('unsubscribes from both events when the component goes away', () => {
+    const { listenerCount } = installEventfulWebApp({ isActive: true });
+    const { unmount } = renderHook(() => useIsActive(), { wrapper: TmaProvider });
+
+    unmount();
+
+    expect(listenerCount('activated')).toBe(0);
+    expect(listenerCount('deactivated')).toBe(0);
+  });
 });

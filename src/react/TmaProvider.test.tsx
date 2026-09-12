@@ -12,7 +12,7 @@ afterEach(() => {
 });
 
 describe('TmaProvider', () => {
-  // These two run first: the "already warned" flag is module-scoped, so it is spent after one mount outside Telegram.
+  // these two run first: the warned-once flag is module-scoped and spent after one mount outside telegram
   it('does not warn when it finds Telegram', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     installWebApp({ ready: vi.fn() });
@@ -46,6 +46,25 @@ describe('TmaProvider', () => {
     render(<TmaProvider>app</TmaProvider>);
 
     expect(ready).toHaveBeenCalledOnce();
+  });
+
+  it('says it is ready once, not again on every render', () => {
+    const ready = vi.fn();
+    installWebApp({ ready });
+    const { rerender } = render(<TmaProvider>app</TmaProvider>);
+
+    rerender(<TmaProvider>app again</TmaProvider>);
+
+    expect(ready).toHaveBeenCalledOnce();
+  });
+
+  it('never expands on its own: how much screen to take belongs to the app', () => {
+    const expand = vi.fn();
+    installWebApp({ expand });
+
+    render(<TmaProvider>app</TmaProvider>);
+
+    expect(expand).not.toHaveBeenCalled();
   });
 
   it('renders outside Telegram without throwing', () => {

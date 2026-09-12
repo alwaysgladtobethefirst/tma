@@ -55,6 +55,30 @@ describe('useWebAppEvent', () => {
     expect(second).toHaveBeenCalledOnce();
   });
 
+  it('moves the subscription when the event itself changes', () => {
+    const { emit, listenerCount } = installEventfulWebApp();
+    const handler = vi.fn();
+
+    const { rerender } = renderHook(({ event }) => useWebAppEvent(event, handler), {
+      wrapper: TmaProvider,
+      initialProps: { event: 'themeChanged' as 'themeChanged' | 'backButtonClicked' },
+    });
+    rerender({ event: 'backButtonClicked' });
+
+    expect(listenerCount('themeChanged')).toBe(0);
+    expect(listenerCount('backButtonClicked')).toBe(1);
+
+    act(() => {
+      emit('themeChanged');
+    });
+    expect(handler).not.toHaveBeenCalled();
+
+    act(() => {
+      emit('backButtonClicked');
+    });
+    expect(handler).toHaveBeenCalledOnce();
+  });
+
   it('unsubscribes when the component goes away', () => {
     const { listenerCount } = installEventfulWebApp();
     const { unmount } = renderHook(() => useWebAppEvent('themeChanged', vi.fn()), {
