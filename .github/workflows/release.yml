@@ -28,10 +28,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      # mirror the just-published version into github packages too, purely so it
-      # shows up in the repo's "packages" sidebar. github packages requires the
-      # scope to match the github owner, so this publishes under a renamed copy
-      # (@alwaysgladtobethefirst/tma) - the real package stays @skrynnyk/tma on npm.
       - if: steps.changesets.outputs.published == 'true'
         uses: actions/setup-node@v4
         with:
