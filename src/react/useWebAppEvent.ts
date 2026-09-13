@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { on } from '../web-app';
 import type { EventHandler, EventPayload, EventType } from '../web-app.types';
-import { useIsomorphicLayoutEffect } from './useIsomorphicLayoutEffect';
+import { useLatestRef } from './useLatestRef';
 import { useTmaContext } from './useTmaContext';
 
 /**
@@ -16,11 +16,9 @@ import { useTmaContext } from './useTmaContext';
 export function useWebAppEvent<E extends EventType>(event: E, handler: EventHandler<E>): void {
   useTmaContext('useWebAppEvent');
 
-  const handlerRef = useRef(handler);
-  useIsomorphicLayoutEffect(() => {
-    handlerRef.current = handler;
-  });
+  const handlerRef = useLatestRef(handler);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handlerRef is a stable ref from useLatestRef, not a value the effect should resubscribe on
   useEffect(() => {
     const forward = ((payload: EventPayload<E>) => {
       (handlerRef.current as (payload: EventPayload<E>) => void)(payload);

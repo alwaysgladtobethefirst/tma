@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { getWebApp } from '../web-app';
 import type { BottomButton, BottomButtonPosition } from '../web-app.types';
 import type { BottomButtonOptions } from './useBottomButton.types';
 import { useButtonOwnership } from './useButtonOwnership';
+import { useLatestRef } from './useLatestRef';
 import { useTmaContext } from './useTmaContext';
 
 type BottomButtonName = 'MainButton' | 'SecondaryButton';
@@ -38,15 +39,13 @@ export function useBottomButton(
     position,
   } = options;
 
-  const onClickRef = useRef(onClick);
-  useEffect(() => {
-    onClickRef.current = onClick;
-  });
+  const onClickRef = useLatestRef(onClick);
 
   useButtonOwnership(ownership, name, () => {
     selectButton(name)?.hide();
   });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: onClickRef is a stable ref from useLatestRef, not a value the effect should resubscribe on
   useEffect(() => {
     const button = selectButton(name);
     if (button === undefined) return;

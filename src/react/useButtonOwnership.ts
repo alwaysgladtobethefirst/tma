@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import type { OwnershipRegistry } from './createOwnershipRegistry';
+import { useLatestRef } from './useLatestRef';
 
 /**
  * Keeps track of how many components are driving one of Telegram's buttons
@@ -18,11 +19,9 @@ export function useButtonOwnership(
   buttonName: string,
   onLastOwnerLeft: () => void,
 ): void {
-  const release = useRef(onLastOwnerLeft);
-  useEffect(() => {
-    release.current = onLastOwnerLeft;
-  });
+  const release = useLatestRef(onLastOwnerLeft);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: release is a stable ref from useLatestRef, not a value the effect should re-run on
   useEffect(() => {
     registry.claim(buttonName);
 
