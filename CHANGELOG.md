@@ -1,5 +1,11 @@
 # @skrynnyk/tma
 
+## 0.3.0
+
+### Minor Changes
+
+- fabcd0c: add the buttons telegram draws (`<MainButton>`, `<SecondaryButton>`, `<BackButton>`, `<SettingsButton>` and their hooks), a `<Tappable>` primitive that makes any child feel pressable, and haptics in the core
+
 ## 0.2.0
 
 ### Minor Changes
