@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { getWebApp } from '../web-app';
-import type { BottomButton, BottomButtonPosition } from '../web-app.types';
+import type { BottomButton, BottomButtonParams, BottomButtonPosition } from '../web-app.types';
 import type { BottomButtonOptions } from './useBottomButton.types';
 import { useButtonOwnership } from './useButtonOwnership';
 import { useLatestRef } from './useLatestRef';
@@ -10,6 +10,27 @@ type BottomButtonName = 'MainButton' | 'SecondaryButton';
 
 function selectButton(name: BottomButtonName): BottomButton | undefined {
   return getWebApp()?.[name];
+}
+
+function toBottomButtonParams(options: {
+  text: string;
+  color?: string;
+  textColor?: string;
+  isActive: boolean;
+  hasShineEffect?: boolean;
+  position?: BottomButtonPosition;
+}): BottomButtonParams {
+  const { text, color, textColor, isActive, hasShineEffect, position } = options;
+
+  return {
+    text,
+    is_visible: true,
+    is_active: isActive,
+    ...(color !== undefined && { color }),
+    ...(textColor !== undefined && { text_color: textColor }),
+    ...(hasShineEffect !== undefined && { has_shine_effect: hasShineEffect }),
+    ...(position !== undefined && { position }),
+  };
 }
 
 /**
@@ -64,15 +85,9 @@ export function useBottomButton(
     const button = selectButton(name);
     if (button === undefined) return;
 
-    button.setParams({
-      text,
-      is_visible: true,
-      is_active: isActive,
-      ...(color !== undefined && { color }),
-      ...(textColor !== undefined && { text_color: textColor }),
-      ...(hasShineEffect !== undefined && { has_shine_effect: hasShineEffect }),
-      ...(position !== undefined && { position }),
-    });
+    button.setParams(
+      toBottomButtonParams({ text, color, textColor, isActive, hasShineEffect, position }),
+    );
 
     if (isProgressVisible) {
       button.showProgress();

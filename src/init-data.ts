@@ -72,6 +72,7 @@ export function parseInitData(raw: string): ParsedInitData | undefined {
   const data: WebAppInitData = { hash, auth_date: authDate };
   const warnings: InitDataFieldWarning[] = [];
 
+  // optional numeric field
   const canSendAfterRaw = params.get('can_send_after');
   if (canSendAfterRaw !== null) {
     const canSendAfter = parseFiniteNumber(canSendAfterRaw);
@@ -82,6 +83,7 @@ export function parseInitData(raw: string): ParsedInitData | undefined {
     }
   }
 
+  // optional json-encoded object fields
   const userResult = parseObjectField<WebAppUser>(params.get('user'), 'user', [
     ['id', 'number'],
     ['first_name', 'string'],
@@ -104,6 +106,7 @@ export function parseInitData(raw: string): ParsedInitData | undefined {
   if (chatResult.value) data.chat = chatResult.value;
   if (chatResult.warning) warnings.push(chatResult.warning);
 
+  // optional plain string fields
   const queryId = params.get('query_id');
   if (queryId !== null) data.query_id = queryId;
 

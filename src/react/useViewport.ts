@@ -1,6 +1,6 @@
 import { getWebApp, on } from '../web-app';
 import { createWebAppStore } from './createWebAppStore';
-import type { WebAppStore } from './createWebAppStore.types';
+import type { Listen, WebAppStore } from './createWebAppStore.types';
 import { useStoreSnapshot } from './useStoreSnapshot';
 import type { Viewport } from './useViewport.types';
 
@@ -13,24 +13,25 @@ import type { Viewport } from './useViewport.types';
 function createViewportStore(): WebAppStore<Viewport> {
   let isStateStable = true;
 
-  return createWebAppStore(
-    (onChange) =>
-      on('viewportChanged', (payload) => {
-        isStateStable = payload.isStateStable;
-        onChange();
-      }),
-    () => {
-      const webApp = getWebApp();
-      if (webApp === undefined) return undefined;
+  const listen: Listen = (onChange) =>
+    on('viewportChanged', (payload) => {
+      isStateStable = payload.isStateStable;
+      onChange();
+    });
 
-      return {
-        height: webApp.viewportHeight,
-        stableHeight: webApp.viewportStableHeight,
-        isExpanded: webApp.isExpanded,
-        isStateStable,
-      };
-    },
-  );
+  function read(): Viewport | undefined {
+    const webApp = getWebApp();
+    if (webApp === undefined) return undefined;
+
+    return {
+      height: webApp.viewportHeight,
+      stableHeight: webApp.viewportStableHeight,
+      isExpanded: webApp.isExpanded,
+      isStateStable,
+    };
+  }
+
+  return createWebAppStore(listen, read);
 }
 
 /**

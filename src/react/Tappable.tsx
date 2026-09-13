@@ -20,6 +20,16 @@ function isInside(event: PointerEvent<HTMLElement>): boolean {
   );
 }
 
+type Haptic = NonNullable<TappableProps['haptic']>;
+
+function triggerHaptic(haptic: Haptic): void {
+  if (haptic === 'selection') {
+    selectionChanged();
+  } else if (haptic !== false) {
+    impactOccurred(haptic);
+  }
+}
+
 /**
  * Makes its child feel like something you can press: a haptic tick on touch,
  * a `data-pressed` attribute while the finger is down, and the press let go
@@ -56,12 +66,7 @@ export function Tappable({ children, haptic = 'selection' }: TappableProps) {
     event.currentTarget.setPointerCapture?.(event.pointerId);
     activePointer.current = event.pointerId;
     setIsPressed(true);
-
-    if (haptic === 'selection') {
-      selectionChanged();
-    } else if (haptic !== false) {
-      impactOccurred(haptic);
-    }
+    triggerHaptic(haptic);
   }
 
   function handlePointerMove(event: PointerEvent<HTMLElement>): void {

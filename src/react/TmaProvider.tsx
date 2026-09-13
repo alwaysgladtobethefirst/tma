@@ -1,11 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getInitData } from '../init-data';
+import type { ParsedInitData } from '../init-data.types';
 import { isMiniApp, ready } from '../web-app';
 import { createOwnershipRegistry } from './createOwnershipRegistry';
 import { createStoreRegistry } from './createStoreRegistry';
 import type { TmaContextValue, TmaProviderProps } from './TmaProvider.types';
 import { TmaContext } from './useTmaContext';
 import { warnOnce } from './warnOnce';
+
+function warnAboutBrokenLaunchDataFields(launch: ParsedInitData): void {
+  if (launch.warnings.length === 0) return;
+
+  const summary = launch.warnings.map(({ field, reason }) => `${field} (${reason})`).join(', ');
+  warnOnce(
+    'launch-data',
+    `Some launch data fields could not be read and were left out: ${summary}.`,
+  );
+}
 
 /**
  * The root every hook in this layer needs above it. Mount it once, near the
@@ -39,14 +50,7 @@ export function TmaProvider({ children }: TmaProviderProps) {
     }
 
     ready();
-
-    if (launch !== undefined && launch.warnings.length > 0) {
-      const summary = launch.warnings.map(({ field, reason }) => `${field} (${reason})`).join(', ');
-      warnOnce(
-        'launch-data',
-        `Some launch data fields could not be read and were left out: ${summary}.`,
-      );
-    }
+    if (launch !== undefined) warnAboutBrokenLaunchDataFields(launch);
   }, [launch]);
 
   return <TmaContext value={value}>{children}</TmaContext>;
