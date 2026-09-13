@@ -61,4 +61,40 @@ Every hook returns `undefined` outside Telegram and while rendering on a server,
 | `useWebApp()` | the raw `WebApp` object, for anything not wrapped yet |
 | `useWebAppEvent(event, handler)` | subscribes for as long as the component lives |
 
-These hooks only read. Acting on the platform – `ready()`, `expand()` – stays in the core and is imported from `@skrynnyk/tma` directly.
+These hooks only read. Acting on the platform – `ready()`, `expand()`, `impactOccurred()`, `notificationOccurred()`, `selectionChanged()` – stays in the core and is imported from `@skrynnyk/tma` directly.
+
+### Buttons
+
+Telegram draws these itself, so nothing renders here: a button component only says what it should read and what a press means. Mounting shows it, unmounting puts it away.
+
+```tsx
+import { BackButton, MainButton } from '@skrynnyk/tma/react';
+
+function Editor({ onSave, onClose }: { onSave: () => void; onClose: () => void }) {
+  return (
+    <>
+      <MainButton text="Save" onClick={onSave} />
+      <BackButton onClick={onClose} />
+      <form>…</form>
+    </>
+  );
+}
+```
+
+`<MainButton>`, `<SecondaryButton>`, `<BackButton>` and `<SettingsButton>` each have a hook underneath – `useMainButton`, `useSecondaryButton`, `useBackButton`, `useSettingsButton` – for when a component is more ceremony than you want.
+
+If two components drive the same button at once, the last one mounted wins and you get a warning in development. The button is only put away once the last of them is gone, so a screen transition doesn't blank it mid-flight.
+
+### Tappable
+
+Makes its child feel pressable: a haptic on touch, `data-pressed` while the finger is down, and the press let go of when the finger slides away or the gesture turns into a scroll.
+
+```tsx
+import { Tappable } from '@skrynnyk/tma/react';
+
+<Tappable>
+  <li className="data-[pressed]:bg-black/5">Open</li>
+</Tappable>;
+```
+
+It adds no element of its own – the child is handed straight back with the behaviour attached – and it ships no styles: how "pressed" looks is yours to decide, and `[data-pressed]` is what you style. `haptic` picks the feedback: `'selection'` by default, any impact style, or `false` for silence. This one needs no provider.

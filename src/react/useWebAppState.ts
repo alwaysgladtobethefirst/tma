@@ -1,31 +1,22 @@
-import { useCallback } from 'react';
-import { on } from '../web-app';
-import type { EventHandler, EventType, WebApp } from '../web-app.types';
-import { useWebAppSnapshot } from './useWebAppSnapshot';
+import type { EventType, WebApp } from '../web-app.types';
+import { createWebAppStore } from './createWebAppStore';
+import { fromEvents } from './fromEvents';
+import { readWebApp } from './readWebApp';
+import { useStoreSnapshot } from './useStoreSnapshot';
 
 /**
  * A piece of `WebApp` state that a set of events announces changes to.
  *
- * `events` and `read` must be stable across renders — define them at module
- * scope — or the subscription is torn down and rebuilt on every render.
+ * The store is keyed by the hook and the event names, so every component
+ * calling the same hook joins one subscription — and rebuilding the events
+ * array on each render changes nothing, since the names are what identify it.
  */
 export function useWebAppState<T>(
   hookName: string,
   events: readonly EventType[],
   read: (webApp: WebApp) => T,
 ): T | undefined {
-  const subscribe = useCallback(
-    (onStoreChange: () => void) => {
-      const unsubscribes = events.map((event) =>
-        on(event, onStoreChange as EventHandler<EventType>),
-      );
-
-      return () => {
-        for (const unsubscribe of unsubscribes) unsubscribe();
-      };
-    },
-    [events],
+  return useStoreSnapshot(hookName, `${hookName}:${events.join(' ')}`, () =>
+    createWebAppStore(fromEvents(events), readWebApp(read)),
   );
-
-  return useWebAppSnapshot(hookName, subscribe, read);
 }

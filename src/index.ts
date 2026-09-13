@@ -1,3 +1,4 @@
+export { impactOccurred, notificationOccurred, selectionChanged } from './haptics';
 export { getInitData, parseInitData } from './init-data';
 export type { InitDataFieldWarning, ParsedInitData } from './init-data.types';
 export { signInitData, validateInitData, validateInitDataSignature } from './validate';
