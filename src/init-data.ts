@@ -8,17 +8,25 @@ interface ObjectFieldResult<T> {
   warning?: InitDataFieldWarning;
 }
 
+/** One field `parseObjectField` insists on finding, and the primitive type it must have. */
+interface RequiredField {
+  key: string;
+  type: 'number' | 'string';
+}
+
 /**
  * Decodes a JSON-encoded object field: JSON-parses it, then checks it has
  * every field in `requiredFields`, with the right primitive type. Anything
  * else in the object is trusted as-is, unchecked — this is deliberately not
  * a full schema validator, just enough to catch a broken launch.
  */
-function parseObjectField<T>(
-  raw: string | null,
-  field: InitDataFieldWarning['field'],
-  requiredFields: Array<[key: string, type: 'number' | 'string']>,
-): ObjectFieldResult<T> {
+function parseObjectField<T>(options: {
+  raw: string | null;
+  field: InitDataFieldWarning['field'];
+  requiredFields: RequiredField[];
+}): ObjectFieldResult<T> {
+  const { raw, field, requiredFields } = options;
+
   if (raw === null) return {};
 
   let parsed: unknown;
@@ -34,7 +42,7 @@ function parseObjectField<T>(
   }
 
   const candidate = parsed as Record<string, unknown>;
-  for (const [key, type] of requiredFields) {
+  for (const { key, type } of requiredFields) {
     if (typeof candidate[key] !== type) {
       return { warning: { field, reason: `missing required field "${key}"` } };
     }
@@ -84,25 +92,37 @@ export function parseInitData(raw: string): ParsedInitData | undefined {
   }
 
   // optional json-encoded object fields
-  const userResult = parseObjectField<WebAppUser>(params.get('user'), 'user', [
-    ['id', 'number'],
-    ['first_name', 'string'],
-  ]);
+  const userResult = parseObjectField<WebAppUser>({
+    raw: params.get('user'),
+    field: 'user',
+    requiredFields: [
+      { key: 'id', type: 'number' },
+      { key: 'first_name', type: 'string' },
+    ],
+  });
   if (userResult.value) data.user = userResult.value;
   if (userResult.warning) warnings.push(userResult.warning);
 
-  const receiverResult = parseObjectField<WebAppUser>(params.get('receiver'), 'receiver', [
-    ['id', 'number'],
-    ['first_name', 'string'],
-  ]);
+  const receiverResult = parseObjectField<WebAppUser>({
+    raw: params.get('receiver'),
+    field: 'receiver',
+    requiredFields: [
+      { key: 'id', type: 'number' },
+      { key: 'first_name', type: 'string' },
+    ],
+  });
   if (receiverResult.value) data.receiver = receiverResult.value;
   if (receiverResult.warning) warnings.push(receiverResult.warning);
 
-  const chatResult = parseObjectField<WebAppChat>(params.get('chat'), 'chat', [
-    ['id', 'number'],
-    ['type', 'string'],
-    ['title', 'string'],
-  ]);
+  const chatResult = parseObjectField<WebAppChat>({
+    raw: params.get('chat'),
+    field: 'chat',
+    requiredFields: [
+      { key: 'id', type: 'number' },
+      { key: 'type', type: 'string' },
+      { key: 'title', type: 'string' },
+    ],
+  });
   if (chatResult.value) data.chat = chatResult.value;
   if (chatResult.warning) warnings.push(chatResult.warning);
 
