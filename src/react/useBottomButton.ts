@@ -89,6 +89,15 @@ export function useBottomButton(
       toBottomButtonParams({ text, color, textColor, isActive, hasShineEffect, position }),
     );
 
+    // is_active in setParams only seems to drive the dimmed look on some
+    // clients — taps still reach onClick with it alone, so the imperative
+    // enable/disable pair is what actually blocks the press
+    if (isActive) {
+      button.enable();
+    } else {
+      button.disable();
+    }
+
     if (isProgressVisible) {
       button.showProgress();
     } else {

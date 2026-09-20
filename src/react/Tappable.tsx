@@ -73,7 +73,18 @@ export function Tappable({ children, haptic = 'selection' }: TappableProps) {
     childProps.onPointerMove?.(event);
     if (activePointer.current !== event.pointerId) return;
 
-    setIsPressed(isInside(event));
+    const inside = isInside(event);
+    setIsPressed(inside);
+
+    // pointer capture keeps redirecting pointerup — and the click the
+    // browser derives from it — to this element even once the finger has
+    // visibly left it, so a drag-away still fired the child's click. giving
+    // up capture the moment the finger leaves lets the browser's normal hit
+    // testing take back over, so release now lands wherever the finger
+    // actually is instead of always landing back on this element
+    if (!inside) {
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    }
   }
 
   function handlePointerUp(event: PointerEvent<HTMLElement>): void {
