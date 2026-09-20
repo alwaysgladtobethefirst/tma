@@ -73,7 +73,13 @@ export function Tappable({ children, haptic = 'selection' }: TappableProps) {
     childProps.onPointerMove?.(event);
     if (activePointer.current !== event.pointerId) return;
 
-    setIsPressed(isInside(event));
+    const inside = isInside(event);
+    setIsPressed(inside);
+
+    // release capture so a drag-away doesn't still fire this element's click
+    if (!inside) {
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    }
   }
 
   function handlePointerUp(event: PointerEvent<HTMLElement>): void {

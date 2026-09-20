@@ -145,6 +145,30 @@ describe('Tappable', () => {
     expect(button.hasAttribute('data-pressed')).toBe(true);
   });
 
+  it('gives up pointer capture once the finger leaves, so release stops landing back on it as a click', () => {
+    installHaptics();
+    render(
+      <TmaProvider>
+        <Tappable>
+          <button type="button">Tap</button>
+        </Tappable>
+      </TmaProvider>,
+    );
+    const button = screen.getByRole('button');
+    placeAt(button, { left: 0, top: 0 });
+    const releaseSpy = vi.fn();
+    // jsdom has no real pointer capture — spy on the call instead of
+    // asserting browser retargeting behavior it can't simulate
+    (button as unknown as { releasePointerCapture: typeof releaseSpy }).releasePointerCapture =
+      releaseSpy;
+
+    fireEvent.pointerDown(button, { pointerId: 1, clientX: 10, clientY: 10 });
+    expect(releaseSpy).not.toHaveBeenCalled();
+
+    fireEvent.pointerMove(button, { pointerId: 1, clientX: 500, clientY: 500 });
+    expect(releaseSpy).toHaveBeenCalledWith(1);
+  });
+
   it('lets go when the gesture is cancelled, as a scroll does', () => {
     installHaptics();
     render(

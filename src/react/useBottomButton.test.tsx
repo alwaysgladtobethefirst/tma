@@ -61,6 +61,23 @@ describe('useBottomButton', () => {
     expect(main.button.hideProgress).toHaveBeenCalled();
   });
 
+  it('calls the imperative enable/disable pair, not just is_active in setParams', () => {
+    const main = installMainButton();
+
+    const { rerender } = renderHook(
+      ({ isActive }) =>
+        useBottomButton('test', 'MainButton', { text: 'Save', onClick: vi.fn(), isActive }),
+      { wrapper: TmaProvider, initialProps: { isActive: false } },
+    );
+
+    expect(main.button.disable).toHaveBeenCalledOnce();
+    expect(main.button.enable).not.toHaveBeenCalled();
+
+    rerender({ isActive: true });
+
+    expect(main.button.enable).toHaveBeenCalledOnce();
+  });
+
   it('calls the latest onClick without resubscribing when it changes', () => {
     const main = installMainButton();
     const first = vi.fn();

@@ -89,6 +89,13 @@ export function useBottomButton(
       toBottomButtonParams({ text, color, textColor, isActive, hasShineEffect, position }),
     );
 
+    // is_active alone is cosmetic on some clients; enable/disable actually blocks taps
+    if (isActive) {
+      button.enable();
+    } else {
+      button.disable();
+    }
+
     if (isProgressVisible) {
       button.showProgress();
     } else {
