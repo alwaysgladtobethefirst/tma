@@ -2,6 +2,7 @@ import {
   Children,
   type CSSProperties,
   cloneElement,
+  type MouseEvent,
   type PointerEvent,
   useRef,
   useState,
@@ -45,6 +46,16 @@ function triggerHaptic(haptic: Haptic): void {
 export function Tappable({ children, haptic = 'selection' }: TappableProps) {
   const [isPressed, setIsPressed] = useState(false);
   const activePointer = useRef<number | null>(null);
+  // true whenever the pressed pointer's last known position was outside the
+  // element — releasing capture makes the browser retarget the click to
+  // wherever the pointer actually is, which usually isn't back on this
+  // element, but that's browser behavior we're relying on rather than
+  // something this component controls, and a flick with no reported move
+  // between "inside" and "released outside" skips it entirely. this flag is
+  // the part actually enforced: handleClick swallows the click itself
+  // whenever it's set, so the suppression doesn't depend on retargeting
+  // happening to work out.
+  const suppressClick = useRef(false);
 
   const child = Children.only(children);
   const childProps: TappableChildProps = child.props;
@@ -62,6 +73,7 @@ export function Tappable({ children, haptic = 'selection' }: TappableProps) {
     childProps.onPointerDown?.(event);
     if (isDisabled) return;
 
+    suppressClick.current = false;
     // jsdom and older browsers have no pointer capture; without it a finger that leaves simply stops reporting
     event.currentTarget.setPointerCapture?.(event.pointerId);
     activePointer.current = event.pointerId;
@@ -75,6 +87,8 @@ export function Tappable({ children, haptic = 'selection' }: TappableProps) {
 
     const inside = isInside(event);
     setIsPressed(inside);
+    // sliding back on re-arms the tap, same as the press-state itself does
+    suppressClick.current = !inside;
 
     // release capture so a drag-away doesn't still fire this element's click
     if (!inside) {
@@ -84,12 +98,29 @@ export function Tappable({ children, haptic = 'selection' }: TappableProps) {
 
   function handlePointerUp(event: PointerEvent<HTMLElement>): void {
     childProps.onPointerUp?.(event);
+    // a flick straight from inside to released-outside can skip pointermove
+    // entirely — this is the last chance to catch it before the click does
+    if (activePointer.current === event.pointerId && !isInside(event)) {
+      suppressClick.current = true;
+    }
     release();
   }
 
   function handlePointerCancel(event: PointerEvent<HTMLElement>): void {
     childProps.onPointerCancel?.(event);
+    // a cancelled gesture (a scroll taking over) never completes as a tap
+    suppressClick.current = true;
     release();
+  }
+
+  function handleClick(event: MouseEvent<HTMLElement>): void {
+    if (suppressClick.current) {
+      suppressClick.current = false;
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    childProps.onClick?.(event);
   }
 
   // the child's own style wins: this only fills in what it didn't say
@@ -107,5 +138,6 @@ export function Tappable({ children, haptic = 'selection' }: TappableProps) {
     onPointerMove: handlePointerMove,
     onPointerUp: handlePointerUp,
     onPointerCancel: handlePointerCancel,
+    onClick: handleClick,
   } as TappableChildProps);
 }

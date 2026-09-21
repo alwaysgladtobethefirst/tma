@@ -169,6 +169,103 @@ describe('Tappable', () => {
     expect(releaseSpy).toHaveBeenCalledWith(1);
   });
 
+  it('swallows the click after a drag-away release, even without an intermediate move', () => {
+    installHaptics();
+    const onClick = vi.fn();
+    render(
+      <TmaProvider>
+        <Tappable>
+          <button type="button" onClick={onClick}>
+            Tap
+          </button>
+        </Tappable>
+      </TmaProvider>,
+    );
+    const button = screen.getByRole('button');
+    placeAt(button, { left: 0, top: 0 });
+
+    // a fast flick can go straight from inside to released-outside with no
+    // pointermove reporting the outside position in between — pointerup
+    // itself is what has to catch this, not pointermove
+    fireEvent.pointerDown(button, { pointerId: 1, clientX: 10, clientY: 10 });
+    fireEvent.pointerUp(button, { pointerId: 1, clientX: 500, clientY: 500 });
+    // a real browser may still dispatch this click on the original element
+    // via pointer-capture retargeting quirks; Tappable can't rely on the
+    // browser having suppressed it, so it has to swallow it itself
+    fireEvent.click(button);
+
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('swallows the click after a slower drag-away, caught by pointermove', () => {
+    installHaptics();
+    const onClick = vi.fn();
+    render(
+      <TmaProvider>
+        <Tappable>
+          <button type="button" onClick={onClick}>
+            Tap
+          </button>
+        </Tappable>
+      </TmaProvider>,
+    );
+    const button = screen.getByRole('button');
+    placeAt(button, { left: 0, top: 0 });
+
+    fireEvent.pointerDown(button, { pointerId: 1, clientX: 10, clientY: 10 });
+    fireEvent.pointerMove(button, { pointerId: 1, clientX: 500, clientY: 500 });
+    fireEvent.pointerUp(button, { pointerId: 1, clientX: 500, clientY: 500 });
+    fireEvent.click(button);
+
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('still taps normally when the finger slides off and back on before release', () => {
+    installHaptics();
+    const onClick = vi.fn();
+    render(
+      <TmaProvider>
+        <Tappable>
+          <button type="button" onClick={onClick}>
+            Tap
+          </button>
+        </Tappable>
+      </TmaProvider>,
+    );
+    const button = screen.getByRole('button');
+    placeAt(button, { left: 0, top: 0 });
+
+    fireEvent.pointerDown(button, { pointerId: 1, clientX: 10, clientY: 10 });
+    fireEvent.pointerMove(button, { pointerId: 1, clientX: 500, clientY: 500 });
+    fireEvent.pointerMove(button, { pointerId: 1, clientX: 20, clientY: 20 });
+    fireEvent.pointerUp(button, { pointerId: 1, clientX: 20, clientY: 20 });
+    fireEvent.click(button);
+
+    expect(onClick).toHaveBeenCalledOnce();
+  });
+
+  it('taps normally on an ordinary press and release', () => {
+    installHaptics();
+    const onClick = vi.fn();
+    render(
+      <TmaProvider>
+        <Tappable>
+          <button type="button" onClick={onClick}>
+            Tap
+          </button>
+        </Tappable>
+      </TmaProvider>,
+    );
+    const button = screen.getByRole('button');
+    placeAt(button, { left: 0, top: 0 });
+
+    fireEvent.pointerDown(button, { pointerId: 1, clientX: 10, clientY: 10 });
+    fireEvent.pointerUp(button, { pointerId: 1, clientX: 10, clientY: 10 });
+    fireEvent.click(button);
+
+    expect(onClick).toHaveBeenCalledOnce();
+  });
+
   it('lets go when the gesture is cancelled, as a scroll does', () => {
     installHaptics();
     render(
