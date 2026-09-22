@@ -1,4 +1,4 @@
-import type { CSSProperties, PointerEventHandler, ReactElement } from 'react';
+import type { CSSProperties, MouseEventHandler, PointerEventHandler, ReactElement } from 'react';
 import type { ImpactStyle } from '../web-app.types';
 
 /** The bits of its child `<Tappable>` reads, so it can put them back alongside its own. */
@@ -10,6 +10,7 @@ export interface TappableChildProps {
   onPointerMove?: PointerEventHandler<HTMLElement>;
   onPointerUp?: PointerEventHandler<HTMLElement>;
   onPointerCancel?: PointerEventHandler<HTMLElement>;
+  onClick?: MouseEventHandler<HTMLElement>;
 }
 
 export interface TappableProps {
