@@ -10,14 +10,26 @@ import {
 import { impactOccurred, selectionChanged } from '../haptics';
 import type { TappableChildProps, TappableProps } from './Tappable.types';
 
-function isInside(event: PointerEvent<HTMLElement>): boolean {
-  const { left, right, top, bottom } = event.currentTarget.getBoundingClientRect();
+// a finger is imprecise — this much wobble past the edge still counts as on it
+const SLOP_PX = 10;
 
+interface Rect {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
+// judged against where the element was when the finger landed, not where it
+// is now: if the layout shifts under a still finger (a keyboard closing, a
+// line of text appearing above) the finger hasn't gone anywhere, and a live
+// rect would wrongly read that as a drag-away and swallow the tap
+function isInside(event: PointerEvent<HTMLElement>, rect: Rect): boolean {
   return (
-    event.clientX >= left &&
-    event.clientX <= right &&
-    event.clientY >= top &&
-    event.clientY <= bottom
+    event.clientX >= rect.left - SLOP_PX &&
+    event.clientX <= rect.right + SLOP_PX &&
+    event.clientY >= rect.top - SLOP_PX &&
+    event.clientY <= rect.bottom + SLOP_PX
   );
 }
 
@@ -46,6 +58,7 @@ function triggerHaptic(haptic: Haptic): void {
 export function Tappable({ children, haptic = 'selection' }: TappableProps) {
   const [isPressed, setIsPressed] = useState(false);
   const activePointer = useRef<number | null>(null);
+  const pressRect = useRef<Rect>({ left: 0, right: 0, top: 0, bottom: 0 });
   // true whenever the pressed pointer's last known position was outside the
   // element — releasing capture makes the browser retarget the click to
   // wherever the pointer actually is, which usually isn't back on this
@@ -74,6 +87,8 @@ export function Tappable({ children, haptic = 'selection' }: TappableProps) {
     if (isDisabled) return;
 
     suppressClick.current = false;
+    const { left, right, top, bottom } = event.currentTarget.getBoundingClientRect();
+    pressRect.current = { left, right, top, bottom };
     // jsdom and older browsers have no pointer capture; without it a finger that leaves simply stops reporting
     event.currentTarget.setPointerCapture?.(event.pointerId);
     activePointer.current = event.pointerId;
@@ -85,7 +100,7 @@ export function Tappable({ children, haptic = 'selection' }: TappableProps) {
     childProps.onPointerMove?.(event);
     if (activePointer.current !== event.pointerId) return;
 
-    const inside = isInside(event);
+    const inside = isInside(event, pressRect.current);
     setIsPressed(inside);
     // sliding back on re-arms the tap, same as the press-state itself does
     suppressClick.current = !inside;
@@ -100,7 +115,7 @@ export function Tappable({ children, haptic = 'selection' }: TappableProps) {
     childProps.onPointerUp?.(event);
     // a flick straight from inside to released-outside can skip pointermove
     // entirely — this is the last chance to catch it before the click does
-    if (activePointer.current === event.pointerId && !isInside(event)) {
+    if (activePointer.current === event.pointerId && !isInside(event, pressRect.current)) {
       suppressClick.current = true;
     }
     release();
