@@ -266,6 +266,53 @@ describe('Tappable', () => {
     expect(onClick).toHaveBeenCalledOnce();
   });
 
+  it('still taps when the layout shifts under a finger that never moved', () => {
+    installHaptics();
+    const onClick = vi.fn();
+    render(
+      <TmaProvider>
+        <Tappable>
+          <button type="button" onClick={onClick}>
+            Tap
+          </button>
+        </Tappable>
+      </TmaProvider>,
+    );
+    const button = screen.getByRole('button');
+    placeAt(button, { left: 0, top: 0 });
+
+    fireEvent.pointerDown(button, { pointerId: 1, clientX: 10, clientY: 10 });
+    // a keyboard closing mid-press pushes the button 200px down the screen
+    placeAt(button, { left: 0, top: 200 });
+    fireEvent.pointerMove(button, { pointerId: 1, clientX: 10, clientY: 10 });
+    fireEvent.pointerUp(button, { pointerId: 1, clientX: 10, clientY: 10 });
+    fireEvent.click(button);
+
+    expect(onClick).toHaveBeenCalledOnce();
+  });
+
+  it('forgives a little wobble past the edge', () => {
+    installHaptics();
+    const onClick = vi.fn();
+    render(
+      <TmaProvider>
+        <Tappable>
+          <button type="button" onClick={onClick}>
+            Tap
+          </button>
+        </Tappable>
+      </TmaProvider>,
+    );
+    const button = screen.getByRole('button');
+    placeAt(button, { left: 0, top: 0 });
+
+    fireEvent.pointerDown(button, { pointerId: 1, clientX: 95, clientY: 35 });
+    fireEvent.pointerUp(button, { pointerId: 1, clientX: 106, clientY: 46 });
+    fireEvent.click(button);
+
+    expect(onClick).toHaveBeenCalledOnce();
+  });
+
   it('lets go when the gesture is cancelled, as a scroll does', () => {
     installHaptics();
     render(

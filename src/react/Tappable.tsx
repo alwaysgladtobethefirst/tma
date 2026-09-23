@@ -10,14 +10,21 @@ import {
 import { impactOccurred, selectionChanged } from '../haptics';
 import type { TappableChildProps, TappableProps } from './Tappable.types';
 
-function isInside(event: PointerEvent<HTMLElement>): boolean {
-  const { left, right, top, bottom } = event.currentTarget.getBoundingClientRect();
+const SLOP_PX = 10;
 
+interface Rect {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
+function isInside(event: PointerEvent<HTMLElement>, rect: Rect): boolean {
   return (
-    event.clientX >= left &&
-    event.clientX <= right &&
-    event.clientY >= top &&
-    event.clientY <= bottom
+    event.clientX >= rect.left - SLOP_PX &&
+    event.clientX <= rect.right + SLOP_PX &&
+    event.clientY >= rect.top - SLOP_PX &&
+    event.clientY <= rect.bottom + SLOP_PX
   );
 }
 
@@ -46,15 +53,7 @@ function triggerHaptic(haptic: Haptic): void {
 export function Tappable({ children, haptic = 'selection' }: TappableProps) {
   const [isPressed, setIsPressed] = useState(false);
   const activePointer = useRef<number | null>(null);
-  // true whenever the pressed pointer's last known position was outside the
-  // element — releasing capture makes the browser retarget the click to
-  // wherever the pointer actually is, which usually isn't back on this
-  // element, but that's browser behavior we're relying on rather than
-  // something this component controls, and a flick with no reported move
-  // between "inside" and "released outside" skips it entirely. this flag is
-  // the part actually enforced: handleClick swallows the click itself
-  // whenever it's set, so the suppression doesn't depend on retargeting
-  // happening to work out.
+  const pressRect = useRef<Rect>({ left: 0, right: 0, top: 0, bottom: 0 });
   const suppressClick = useRef(false);
 
   const child = Children.only(children);
@@ -74,7 +73,8 @@ export function Tappable({ children, haptic = 'selection' }: TappableProps) {
     if (isDisabled) return;
 
     suppressClick.current = false;
-    // jsdom and older browsers have no pointer capture; without it a finger that leaves simply stops reporting
+    const { left, right, top, bottom } = event.currentTarget.getBoundingClientRect();
+    pressRect.current = { left, right, top, bottom };
     event.currentTarget.setPointerCapture?.(event.pointerId);
     activePointer.current = event.pointerId;
     setIsPressed(true);
@@ -85,12 +85,10 @@ export function Tappable({ children, haptic = 'selection' }: TappableProps) {
     childProps.onPointerMove?.(event);
     if (activePointer.current !== event.pointerId) return;
 
-    const inside = isInside(event);
+    const inside = isInside(event, pressRect.current);
     setIsPressed(inside);
-    // sliding back on re-arms the tap, same as the press-state itself does
     suppressClick.current = !inside;
 
-    // release capture so a drag-away doesn't still fire this element's click
     if (!inside) {
       event.currentTarget.releasePointerCapture?.(event.pointerId);
     }
@@ -98,9 +96,7 @@ export function Tappable({ children, haptic = 'selection' }: TappableProps) {
 
   function handlePointerUp(event: PointerEvent<HTMLElement>): void {
     childProps.onPointerUp?.(event);
-    // a flick straight from inside to released-outside can skip pointermove
-    // entirely — this is the last chance to catch it before the click does
-    if (activePointer.current === event.pointerId && !isInside(event)) {
+    if (activePointer.current === event.pointerId && !isInside(event, pressRect.current)) {
       suppressClick.current = true;
     }
     release();
@@ -108,7 +104,6 @@ export function Tappable({ children, haptic = 'selection' }: TappableProps) {
 
   function handlePointerCancel(event: PointerEvent<HTMLElement>): void {
     childProps.onPointerCancel?.(event);
-    // a cancelled gesture (a scroll taking over) never completes as a tap
     suppressClick.current = true;
     release();
   }
@@ -123,7 +118,6 @@ export function Tappable({ children, haptic = 'selection' }: TappableProps) {
     childProps.onClick?.(event);
   }
 
-  // the child's own style wins: this only fills in what it didn't say
   const style: CSSProperties = {
     WebkitTouchCallout: 'none',
     WebkitUserSelect: 'none',
